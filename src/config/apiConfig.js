@@ -1,8 +1,8 @@
 // Central API config — reads base URL from Vite env or falls back to production URL
 // export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://hr-spring-backend.onrender.com";
 // export const API_BASE_URL = "http://10.20.190.61:8080";
-export const API_BASE_URL = "https://hr-spring-backend.onrender.com";
-// export const API_BASE_URL = "http://localhost:8080";
+// export const API_BASE_URL = "https://hr-spring-backend.onrender.com";
+export const API_BASE_URL = "http://localhost:8080";
 
 export const withBase = (path) => {
     if (!path) return API_BASE_URL;
