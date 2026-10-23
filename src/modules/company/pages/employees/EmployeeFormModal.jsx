@@ -281,8 +281,8 @@ const EmployeeFormModal = ({ isOpen, onClose, token, onSuccess, mode = "add", em
                     {(() => {
                         const emp = employee || form;
                         return renderViewSection("Job Information", [
-                            { label: "Department", value: emp.departmentName || (departments.find(d => d.id == emp.departmentId)?.name) },
-                            { label: "Designation", value: emp.designationName || (designations.find(d => d.id == emp.designationId)?.name) },
+                            { label: "Department", value: emp.departmentName || (departments.find(d => d.id == emp.departmentId)?.name) || (emp.role === "COMPANY_ADMIN" ? "Administration" : "") },
+                            { label: "Designation", value: emp.designationName || (designations.find(d => d.id == emp.designationId)?.name) || (emp.role === "COMPANY_ADMIN" ? "Admin" : "") },
                             { label: "Employment Type", value: emp.employmentType },
                             { label: "Date of Joining", value: emp.dateOfJoining },
                             { label: "Reporting Manager", value: emp.reportingManager },

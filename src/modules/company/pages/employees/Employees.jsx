@@ -54,9 +54,12 @@ const Employees = () => {
 
     const filtered = employees.filter(emp => {
         const q = searchTerm.toLowerCase();
+        const dept = emp.departmentName || (emp.role === "COMPANY_ADMIN" ? "Administration" : "");
+        const desig = emp.designationName || (emp.role === "COMPANY_ADMIN" ? "Admin" : "");
         return (emp.firstName + " " + emp.lastName).toLowerCase().includes(q)
             || (emp.email || "").toLowerCase().includes(q)
-            || (emp.departmentName || "").toLowerCase().includes(q);
+            || dept.toLowerCase().includes(q)
+            || desig.toLowerCase().includes(q);
     });
 
     const columns = [
@@ -66,8 +69,14 @@ const Employees = () => {
         },
         { key: "email", label: "Email", width: "200px" },
         { key: "phone", label: "Phone", width: "130px" },
-        { key: "departmentName", label: "Department", width: "130px" },
-        { key: "designationName", label: "Designation", width: "140px" },
+        {
+            key: "departmentName", label: "Department", width: "130px",
+            render: (val, row) => val || (row.role === "COMPANY_ADMIN" ? "Administration" : "-")
+        },
+        {
+            key: "designationName", label: "Designation", width: "140px",
+            render: (val, row) => val || (row.role === "COMPANY_ADMIN" ? "Admin" : "-")
+        },
         { key: "userRoleName", label: "Role", width: "110px" },
         {
             key: "role", label: "Type", width: "100px",
