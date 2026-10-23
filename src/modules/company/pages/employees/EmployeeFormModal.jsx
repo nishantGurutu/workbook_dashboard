@@ -3,17 +3,18 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Upload, Copy, CheckCircle } from "lucide-react";
 import { withBase } from "../../../../config/apiConfig";
 
-const Field = ({ label, required, mode, ...props }) => {
+const Field = ({ label, required, mode, disabled, ...props }) => {
     const isView = mode === "view";
+    const isDisabled = isView || disabled;
     const baseClass = "w-full h-12 px-3.5 border rounded-xl text-sm transition-all placeholder:text-slate-400";
-    const disabledClass = "bg-slate-50 text-slate-500 border-slate-200 cursor-default";
+    const disabledClass = "bg-slate-50 text-slate-500 border-slate-200 cursor-not-allowed";
     const editableClass = "text-slate-700 bg-white border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400";
 
     if (props.type === "textarea") {
         return (
             <div className="space-y-1.5">
                 <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider">{label}{required && isView !== true && <span className="text-red-400 ml-0.5">*</span>}</label>
-                <textarea {...props} disabled={isView} className={`w-full h-24 px-3.5 py-2.5 rounded-xl text-sm transition-all resize-none placeholder:text-slate-400 ${isView ? disabledClass : editableClass}`} />
+                <textarea {...props} disabled={isDisabled} className={`w-full h-24 px-3.5 py-2.5 rounded-xl text-sm transition-all resize-none placeholder:text-slate-400 ${isDisabled ? disabledClass : editableClass}`} />
             </div>
         );
     }
@@ -21,7 +22,7 @@ const Field = ({ label, required, mode, ...props }) => {
         return (
             <div className="space-y-1.5">
                 <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider">{label}{required && isView !== true && <span className="text-red-400 ml-0.5">*</span>}</label>
-                <select {...props} disabled={isView} className={`${baseClass} ${isView ? `${disabledClass} appearance-none` : "appearance-none cursor-pointer"}`}>
+                <select {...props} disabled={isDisabled} className={`${baseClass} ${isDisabled ? `${disabledClass} appearance-none` : "appearance-none cursor-pointer"}`}>
                     {props.children}
                 </select>
             </div>
@@ -30,7 +31,7 @@ const Field = ({ label, required, mode, ...props }) => {
     return (
         <div className="space-y-1.5">
             <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider">{label}{required && isView !== true && <span className="text-red-400 ml-0.5">*</span>}</label>
-            <input {...props} disabled={isView} className={`${baseClass} ${isView ? disabledClass : editableClass}`} />
+            <input {...props} disabled={isDisabled} className={`${baseClass} ${isDisabled ? disabledClass : editableClass}`} />
         </div>
     );
 };
@@ -167,9 +168,25 @@ const EmployeeFormModal = ({ isOpen, onClose, token, onSuccess, mode = "add", em
     }, [isOpen, token]);
 
     const handleChange = (e) => {
-        setForm({ ...form, [e.target.name]: e.target.value });
-        if (e.target.name === "password") lastPassword.current = e.target.value;
+        const { name, value } = e.target;
+        if (name === "departmentId") {
+            const isValidDesig = designations.some(
+                d => String(d.id) === String(form.designationId) && d.departmentId != null && String(d.departmentId) === String(value)
+            );
+            setForm(prev => ({
+                ...prev,
+                departmentId: value,
+                designationId: isValidDesig ? prev.designationId : ""
+            }));
+            return;
+        }
+        setForm(prev => ({ ...prev, [name]: value }));
+        if (name === "password") lastPassword.current = value;
     };
+
+    const filteredDesignations = form.departmentId
+        ? designations.filter(d => d.departmentId != null && String(d.departmentId) === String(form.departmentId))
+        : [];
 
     const buildBody = () => {
         const body = {
@@ -427,8 +444,27 @@ const EmployeeFormModal = ({ isOpen, onClose, token, onSuccess, mode = "add", em
                     {/* 2. JOB INFORMATION */}
                     <SectionCard title="Job Information">
                         <SectionGrid>
-                            <Field label="Department" required mode={mode} type="select" name="departmentId" value={form.departmentId} onChange={handleChange}><option value="">Select Department</option>{departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}</Field>
-                            <Field label="Designation" required mode={mode} type="select" name="designationId" value={form.designationId} onChange={handleChange}><option value="">Select Designation</option>{designations.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}</Field>
+                            <Field label="Department" required mode={mode} type="select" name="departmentId" value={form.departmentId} onChange={handleChange}>
+                                <option value="">Select Department</option>
+                                {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                            </Field>
+                            <Field
+                                label="Designation"
+                                required
+                                mode={mode}
+                                type="select"
+                                name="designationId"
+                                value={form.designationId}
+                                onChange={handleChange}
+                                disabled={!form.departmentId && !isView}
+                            >
+                                <option value="">
+                                    {form.departmentId
+                                        ? (filteredDesignations.length > 0 ? "Select Designation" : "No designations for this department")
+                                        : "Select Department First"}
+                                </option>
+                                {filteredDesignations.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                            </Field>
                             <Field label="Employment Type" required mode={mode} type="select" name="employmentType" value={form.employmentType} onChange={handleChange}><option value="">Select Type</option><option value="Full-Time">Full-Time</option><option value="Part-Time">Part-Time</option><option value="Contract">Contract</option><option value="Intern">Intern</option><option value="Probation">Probation</option></Field>
                             <Field label="Date of Joining" required mode={mode} type="date" name="dateOfJoining" value={form.dateOfJoining} onChange={handleChange} />
                             <Field label="Reporting Manager" mode={mode} type="select" name="reportingManager" value={form.reportingManager} onChange={handleChange}><option value="">Select Manager</option><option value="Rahul Verma">Rahul Verma</option><option value="Priya Sharma">Priya Sharma</option><option value="Amit Kumar">Amit Kumar</option></Field>
